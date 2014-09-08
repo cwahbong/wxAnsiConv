@@ -1,5 +1,8 @@
 #include <wx/wx.h>
 #include <wx/cmdline.h>
+#include <wx/file.h>
+
+#include "AnsiData.h"
 
 class AnsiConvApp: public wxApp
 {
@@ -39,9 +42,10 @@ AnsiConvApp::OnCmdLineParsed(wxCmdLineParser &parser)
 int
 AnsiConvApp::OnRun()
 {
-  // TODO read input
-  // TODO generate wxImage
-  // TODO write image
+  wxFile input_file(input_name);
+  const AnsiData& ad = AnsiData::FromFile(input_file);
+  wxImage image = toImage(ad);
+  image.SaveFile(output_name, wxT_2("image/png"));
   return 0;
 }
 
