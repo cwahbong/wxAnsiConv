@@ -1,6 +1,9 @@
 project(wxAnsiConv)
 cmake_minimum_required(VERSION 2.8)
 
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+
+# find_package(wxWidgets 3.0 COMPONENTS core base REQUIRED)
 find_package(wxWidgets COMPONENTS core base REQUIRED)
 include("${wxWidgets_USE_FILE}")
 

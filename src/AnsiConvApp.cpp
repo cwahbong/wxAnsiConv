@@ -4,7 +4,7 @@
 
 #include "AnsiData.h"
 
-class AnsiConvApp: public wxApp
+class AnsiConvApp: public wxAppConsole
 {
 public:
   virtual void OnInitCmdLine(wxCmdLineParser &);
@@ -16,36 +16,56 @@ private:
   wxString output_name;
 };
 
+namespace {
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+const wxCmdLineEntryDesc cmdLineDesc[] = {
+  {
+    wxCMD_LINE_OPTION,
+    "i",
+    "input",
+    "The input ansi art file.",
+    wxCMD_LINE_VAL_STRING,
+    wxCMD_LINE_OPTION_MANDATORY
+  },
+  {
+    wxCMD_LINE_OPTION,
+    "o",
+    "output",
+    "The output picture.",
+    wxCMD_LINE_VAL_STRING,
+    wxCMD_LINE_OPTION_MANDATORY,
+  },
+  {wxCMD_LINE_NONE},
+};
+#pragma GCC diagnostic pop
+
+} // namespace
+
 void
 AnsiConvApp::OnInitCmdLine(wxCmdLineParser &parser)
 {
-  parser.AddOption(wxT_2("i"),
-                   wxT_2("input"),
-                   wxT_2("The input ansi art file."),
-                   wxCMD_LINE_VAL_STRING,
-                   wxCMD_LINE_OPTION_MANDATORY);
-  parser.AddOption(wxT_2("o"),
-                   wxT_2("output"),
-                   wxT_2("The output picture."),
-                   wxCMD_LINE_VAL_STRING,
-                   wxCMD_LINE_OPTION_MANDATORY);
+  parser.SetDesc(cmdLineDesc);
+  wxAppConsole::OnInitCmdLine(parser);
 }
 
 bool
 AnsiConvApp::OnCmdLineParsed(wxCmdLineParser &parser)
 {
-  parser.Found(wxT_2("i"), &input_name);
-  parser.Found(wxT_2("o"), &output_name);
-  return wxApp::OnCmdLineParsed(parser);
+  parser.Found("i", &input_name);
+  parser.Found("o", &output_name);
+  return wxAppConsole::OnCmdLineParsed(parser);
 }
 
 int
 AnsiConvApp::OnRun()
 {
+  wxLogMessage("%s\n", input_name.wx_str());
   wxFile input_file(input_name);
   const AnsiData& ad = AnsiData::FromFile(input_file);
-  wxImage image = toImage(ad);
-  image.SaveFile(output_name, wxT_2("image/png"));
+  // wxImage image = toImage(ad);
+  // image.SaveFile(output_name, "image/png");
   return 0;
 }
 
