@@ -23,18 +23,23 @@ AnsiData::AnsiData(const void* buffer, size_t len, const wxString& encoding)
     wxLogMessage("Encoding not supported. Will fallback to ISO 8859-1 instead.");
   }
   string buf_str(static_cast<const char*>(buffer), len);
+  string unescaped_buf;
   const vector<RawAnsiSegment>& segments = calc_segments(buf_str);
   for (vector<RawAnsiSegment>::const_iterator it = segments.begin();
        it != segments.end(); ++it) {
     if (it->escaped) {
+      wxString wxstr(buf_str.c_str() + it->begin + 2, it->size - 3);
+      wxLogMessage("ESC %u %s", (unsigned) it->size, wxstr.wx_str());
       wxMemoryInputStream mis(buf_str.c_str() + it->begin + 2, it->size - 3);
-      EscapeSegment(mis, conv);
+      EscapeSegment(mis, wxConvISO8859_1);
     }
     else {
-      wxMemoryInputStream mis(buf_str.c_str() + it->begin, it->size);
-      TextSegment(mis, conv);
+      unescaped_buf.append(buf_str, it->begin, it->size);
+      // wxString wxstr(buf_str.c_str() + it->begin, conv, it->size);
+      // TextSegment(wxstr);
     }
   }
+  TextSegment(wxString(unescaped_buf.c_str(), conv));
 }
 
 void
@@ -46,23 +51,23 @@ AnsiData::EscapeSegment(wxInputStream& is, wxMBConv& conv)
 }
 
 void
-AnsiData::TextSegment(wxInputStream& is, wxMBConv& conv)
+AnsiData::TextSegment(const wxString& wxstr)
 {
-  wxTextInputStream tis(is, "", conv);
-  while (true) {
-    wxChar ch = tis.GetChar();
-    if (ch == 0) {
-      break;
-    }
+  for (size_t i = 0, maxi = wxstr.length(); i < maxi; ++i) {
+    wxUniChar ch = wxstr[i];
     if (ch == '\n') {
       if (v.size() > w) {
         w = v.size();
       }
       data.push_back(v);
       v.clear();
-    } else {
+    } else if (ch != '\r'){
       v.push_back((AnsiChar){color, ch});
     }
+  }
+  if (!v.empty()) {
+    data.push_back(v);
+    v.clear();
   }
 }
 
@@ -87,11 +92,23 @@ AnsiData::Get(size_t r_pos, size_t c_pos) const
 void
 AnsiData::Draw(wxDC& dc, size_t char_size) const
 {
+  dc.SetFont(wxFontInfo(char_size * 0.75).Family(wxFONTFAMILY_ROMAN));
+  dc.SetTextForeground(*wxBLACK);
+  dc.SetTextBackground(*wxWHITE);
+  dc.SetBackground(*wxWHITE);
+  dc.Clear();
   for (size_t r = 0, maxr = Height(); r < maxr; ++r) {
     const vector<AnsiChar>& row = data[r];
+    int rw = 0;
     for (size_t c = 0, maxc = Width(); c < maxc; ++c) {
-      AnsiChar ac = c < row.size() ? row[c] : AnsiChar();
-      dc.DrawText(ac.ch, c * char_size, r * char_size);
+      if (c < row.size()) {
+        AnsiChar ac = row[c];
+        wxCoord w, h;
+        dc.GetTextExtent(ac.ch, &w, &h);
+        wxLogMessage("WH %d %d", w, h);
+        rw += ac.ch >= 128 ? char_size : char_size / 2;
+        dc.DrawText(ac.ch, c * char_size, r * char_size);
+      }
     }
   }
 }
@@ -101,8 +118,6 @@ AnsiData::FromFile(wxInputStream& is, const wxString& encoding)
 {
   wxMemoryOutputStream mos;
   mos.Write(is);
-  // wxLogMessage("Read %u.", (unsigned) fis.LastRead());
-  // wxLogMessage("Write %u.", (unsigned) mos.LastWrite());
   const wxStreamBuffer* buffer = mos.GetOutputStreamBuffer();
   return AnsiData(buffer->GetBufferStart(),
                   buffer->GetBufferSize(),
@@ -119,6 +134,7 @@ AnsiData::FromFile(const wxString& name, const wxString& encoding)
   if (!fis.IsOk()) {
     wxLogMessage("Error occured when opening file.");
   }
+  wxLogMessage("File opened.");
   return AnsiData::FromFile(fis, encoding);
 }
 
@@ -132,8 +148,6 @@ toBitmap(const AnsiData& ad, size_t char_size)
     wxLogMessage("BITMAP NOT OK\n");
   }
   wxMemoryDC dc(bitmap);
-  dc.SetBackground(*wxWHITE_BRUSH);
-  dc.Clear();
   ad.Draw(dc, char_size);
   dc.SelectObject(wxNullBitmap);
   wxLogMessage("Drawed.");

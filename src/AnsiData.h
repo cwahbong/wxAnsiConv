@@ -10,7 +10,7 @@ struct AnsiColor {
 
 struct AnsiChar {
   AnsiColor color;
-  wxChar ch;
+  wxUniChar ch;
 };
 
 class AnsiData {
@@ -27,7 +27,7 @@ public:
 
 private:
   void EscapeSegment(wxInputStream&, wxMBConv&);
-  void TextSegment(wxInputStream&, wxMBConv&);
+  void TextSegment(const wxString&);
 
   size_t w;
 
