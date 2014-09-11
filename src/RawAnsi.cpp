@@ -19,7 +19,7 @@ scan(const string& data, size_t start)
 {
   size_t next_escaped_start = find_or_end(data, "\033[", start);
   return next_escaped_start == start ?
-      (RawAnsiSegment) {start, find_or_end(data, "m", start) - start, true} :
+      (RawAnsiSegment) {start, find_or_end(data, "m", start) + 1 - start, true} :
       (RawAnsiSegment) {start, next_escaped_start - start, false};
 }
 

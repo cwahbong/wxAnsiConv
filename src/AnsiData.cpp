@@ -85,13 +85,15 @@ AnsiData::Get(size_t r_pos, size_t c_pos) const
 }
 
 void
-AnsiData::Draw(wxDC& dc) const
+AnsiData::Draw(wxDC& dc, size_t char_size) const
 {
-  // for () {
-  //   for () {
-  //     data[i][j]; // TODO draw this character
-  //   }
-  // }
+  for (size_t r = 0, maxr = Height(); r < maxr; ++r) {
+    const vector<AnsiChar>& row = data[r];
+    for (size_t c = 0, maxc = Width(); c < maxc; ++c) {
+      AnsiChar ac = c < row.size() ? row[c] : AnsiChar();
+      dc.DrawText(ac.ch, c * char_size, r * char_size);
+    }
+  }
 }
 
 AnsiData
@@ -121,17 +123,26 @@ AnsiData::FromFile(const wxString& name, const wxString& encoding)
 }
 
 wxBitmap
-toBitmap(const AnsiData& ad)
+toBitmap(const AnsiData& ad, size_t char_size)
 {
-  wxBitmap bitmap;
-  wxMemoryDC dc;
-  dc.SelectObject(bitmap);
-  ad.Draw(dc);
+  wxBitmap bitmap(ad.Width() * char_size, ad.Height() * char_size);
+  if (bitmap.IsOk()) {
+    wxLogMessage("Bitmap (%d, %d)\n", bitmap.GetWidth(), bitmap.GetHeight());
+  } else {
+    wxLogMessage("BITMAP NOT OK\n");
+  }
+  wxMemoryDC dc(bitmap);
+  dc.SetBackground(*wxWHITE_BRUSH);
+  dc.Clear();
+  ad.Draw(dc, char_size);
+  dc.SelectObject(wxNullBitmap);
+  wxLogMessage("Drawed.");
   return bitmap;
 }
 
 wxImage
-toImage(const AnsiData& ad)
+toImage(const AnsiData& ad, size_t char_size)
 {
-  return toBitmap(ad).ConvertToImage();
+  wxBitmap bitmap = toBitmap(ad, char_size);
+  return bitmap.ConvertToImage();
 }

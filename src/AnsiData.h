@@ -20,7 +20,7 @@ public:
   size_t Height() const;
   AnsiChar Get(size_t r_pos, size_t c_pos) const;
 
-  void Draw(wxDC&) const;
+  void Draw(wxDC&, size_t) const;
 
   static AnsiData FromFile(wxInputStream&, const wxString&);
   static AnsiData FromFile(const wxString&, const wxString&);
@@ -36,5 +36,5 @@ private:
   std::vector<AnsiChar> v;
 };
 
-wxBitmap toBitmap(const AnsiData&);
-wxImage toImage(const AnsiData&);
+wxBitmap toBitmap(const AnsiData&, size_t);
+wxImage toImage(const AnsiData&, size_t);

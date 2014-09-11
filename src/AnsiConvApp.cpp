@@ -4,7 +4,7 @@
 
 #include "AnsiData.h"
 
-class AnsiConvApp: public wxAppConsole
+class AnsiConvApp: public wxApp
 {
 public:
   virtual void OnInitCmdLine(wxCmdLineParser &);
@@ -70,10 +70,10 @@ AnsiConvApp::OnCmdLineParsed(wxCmdLineParser &parser)
 int
 AnsiConvApp::OnRun()
 {
+  wxInitAllImageHandlers();
   const AnsiData& ad = AnsiData::FromFile(input_name, encoding);
-  wxLogMessage("AnsiData with (width, height) = (%u, %u).\n", (unsigned) ad.Width(), (unsigned) ad.Height());
-  // wxImage image = toImage(ad);
-  // image.SaveFile(output_name, "image/png");
+  wxImage image = toImage(ad, 22);
+  image.SaveFile(output_name, "image/png");
   return 0;
 }
 
