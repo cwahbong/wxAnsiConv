@@ -9,9 +9,10 @@ struct AnsiColor {
   bool underline;
   bool blink;
   bool inverse;
-  bool bfg, bbg;
-  rgb fg, bg;
+  int fg, bg;
+
+  void update(const std::string&);
 };
 
+rgb getRgb(bool bright, int color);
 AnsiColor default_color();
-AnsiColor parse(const std::string&);

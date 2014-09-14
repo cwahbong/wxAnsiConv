@@ -31,23 +31,15 @@ const rgb colors_dark[] = {
 
 } // namespace
 
-AnsiColor
-default_color()
+void
+AnsiColor::update(const string& s)
 {
-  return AnsiColor{
-    false,
-    false,
-    false,
-    false,
-    true, true,
-    colors_bright[7], colors_dark[0],
-  };
-}
-
-AnsiColor
-parse(const string& s)
-{
-  AnsiColor ac{};
+  cerr << "COLOR: " << s << "\n";
+  if (s.empty()) {
+    *this = default_color();
+    cerr << "Reset parsed.\n";
+    return;
+  }
   size_t from = 0;
   while (from < s.size()) {
     size_t to = s.find_first_of(";", from);
@@ -58,30 +50,53 @@ parse(const string& s)
     if (to - from > 0) {
       n = stoi(s.substr(from, to - from));
     }
-    if (n == 1) {
-      ac.bright = true;
+    if (n == 0) {
+      *this = default_color();
+      cerr << "Reset parsed.\n";
+    }
+    else if (n == 1) {
+      bright = true;
+      cerr << "Bright parsed.\n";
     }
     else if (n == 4) {
-      ac.underline = true;
+      underline = true;
+      cerr << "Underline parsed.\n";
     }
     else if (n == 5) {
-      ac.blink = true;
+      blink = true;
+      cerr << "Blink parsed.\n";
     }
     else if (n == 7) {
-      ac.inverse = true;
+      inverse = true;
+      cerr << "Inverse parsed.\n";
     }
     else if (n >= 30 && n <= 37) {
-      ac.bfg = true;
-      ac.fg = ac.bright ? colors_bright[n % 10] : colors_dark[n % 10];
+      fg = n % 10;
     }
     else if (n >= 40 && n <= 47) {
-      ac.bbg = true;
-      ac.bg = colors_dark[n % 10];
+      bg = n % 10;
     }
     else {
       cerr << "AnsiColor.cpp parse(): n = " << n << "\n";
     }
     from = to + 1;
   }
-  return ac;
+}
+
+rgb
+getRgb(bool bright, int color)
+{
+  return bright ? colors_bright[color] : colors_dark[color];
+}
+
+AnsiColor
+default_color()
+{
+  return AnsiColor{
+    false,
+    false,
+    false,
+    false,
+    7, 0,
+  };
 }

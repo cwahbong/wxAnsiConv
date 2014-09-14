@@ -31,17 +31,16 @@ AnsiData::AnsiData(const void* buffer, size_t len, const wxString& encoding)
   wxLogMessage("Get.");
   // Get colors and text.
   const vector<RawAnsiSegment>& segments = calc_segments(buf_str);
-  vector<pair<int, AnsiColor> > colors;
+  vector<pair<int, string> > color_cmds;
   int pos = 0;
   for (vector<RawAnsiSegment>::const_iterator it = segments.begin();
        it != segments.end(); ++it) {
     if (it->escaped) {
-      const AnsiColor& color = parse(buf_str.substr(it->begin + 2, it->size - 3));
-      colors.push_back(make_pair(pos, color));
+      color_cmds.push_back(make_pair(pos, buf_str.substr(it->begin + 2, it->size - 3)));
     }
     else {
       unescaped_buf.append(buf_str, it->begin, it->size);
-      pos += it->size;
+      pos += it->size; // TODO fix this by subtracting \r and \n
     }
   }
 
@@ -51,20 +50,21 @@ AnsiData::AnsiData(const void* buffer, size_t len, const wxString& encoding)
 
   // Assign colors
   AnsiColor color = default_color();
-  wxLogMessage("DC %u %u %u", color.fg.r, color.fg.g, color.fg.b);
-  size_t cidx = 0;
+  pos = 0;
+  size_t cidx = -1;
   for (size_t r = 0, maxr = data.size(); r < maxr; ++r) {
     for (size_t c = 0, maxc = data[r].size(); c < maxc; ++c, ++pos) {
-      while (cidx < colors.size() && colors[cidx + 1].first <= pos) {
+      while (cidx != color_cmds.size() && color_cmds[cidx + 1].first <= pos) {
         ++cidx;
-        // color = colors[cidx].second; XXX
+        wxLogMessage("CU %u %u", (unsigned) r, (unsigned) c);
+        color.update(color_cmds[cidx].second);
       }
-      data[r][c].color = color; /// XXX need update correctly.
-      wxLogMessage("DC %u %u %u", color.fg.r, color.fg.g, color.fg.b);
+      data[r][c].color = color;
     }
     for (size_t c = data[r].size(); c < w; ++c) {
       data[r].push_back((AnsiChar){' ', color, false});
     }
+    ++pos; /// XXX need to consider \r\n
   }
   wxLogMessage("Colors.");
 }
@@ -143,21 +143,23 @@ draw_text(wxDC& dc, size_t char_size, size_t r, size_t hc, const AnsiChar& ac)
 {
   wxBitmap char_bitmap(char_size, char_size);
 
+  rgb brgb = getRgb(false, ac.color.bg);
   wxMemoryDC mdc(char_bitmap);
   wxBrush brush;
   brush.SetColour(
-      ac.color.bg.r,
-      ac.color.bg.g,
-      ac.color.bg.b
+      brgb.r,
+      brgb.g,
+      brgb.b
   );
   mdc.SetBackground(brush);
   mdc.Clear();
 
+  rgb frgb = getRgb(ac.color.bright, ac.color.fg);
   mdc.SetFont(wxFontInfo(char_size * 0.75));
   mdc.SetTextForeground(wxColour{
-    ac.color.fg.r,
-    ac.color.fg.g,
-    ac.color.fg.b,
+      frgb.r,
+      frgb.g,
+      frgb.b
   });
   mdc.DrawText(ac.ch, 0, 0);
   mdc.SelectObject(wxNullBitmap);
@@ -184,7 +186,6 @@ draw(wxDC& dc, const AnsiData& ad, size_t char_size)
     for (size_t c = 0, maxc = ad.Width(); c < maxc; ++c) {
       AnsiChar ac = ad.Get(r, c);
       draw_text(dc, char_size, r, c, ac);
-      // wxLogMessage("%c %u %u %u", ac.ch, ac.color.fg.r, ac.color.fg.g, ac.color.fg.b);
     }
   }
 }
