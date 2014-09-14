@@ -50,8 +50,14 @@ parse(const string& s)
   AnsiColor ac{};
   size_t from = 0;
   while (from < s.size()) {
-    size_t to = s.find_first_of(";");
-    int n = stoi(s.substr(from, to - from));
+    size_t to = s.find_first_of(";", from);
+    if (to == string::npos) {
+      to = s.size();
+    }
+    int n = 0;
+    if (to - from > 0) {
+      n = stoi(s.substr(from, to - from));
+    }
     if (n == 1) {
       ac.bright = true;
     }

@@ -1,7 +1,7 @@
 #include <string>
 
 struct rgb {
-  int r, g, b;
+  unsigned char r, g, b;
 };
 
 struct AnsiColor {

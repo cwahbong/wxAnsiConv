@@ -1,7 +1,7 @@
 project(wxAnsiConv)
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-field-initializers")
 
 find_package(wxWidgets 3.0 COMPONENTS core base REQUIRED)
 include("${wxWidgets_USE_FILE}")
