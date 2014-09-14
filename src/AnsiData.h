@@ -29,6 +29,7 @@ private:
 
   AnsiColor color;
   std::vector<std::vector<AnsiChar> > data;
+  std::vector<size_t> line_pos_fix;
   std::vector<AnsiChar> v;
 };
 

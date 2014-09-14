@@ -64,7 +64,7 @@ AnsiData::AnsiData(const void* buffer, size_t len, const wxString& encoding)
     for (size_t c = data[r].size(); c < w; ++c) {
       data[r].push_back((AnsiChar){' ', color, false});
     }
-    ++pos; /// XXX need to consider \r\n
+    pos += line_pos_fix[r]; // caused by new line characters
   }
   wxLogMessage("Colors.");
 }
@@ -72,23 +72,30 @@ AnsiData::AnsiData(const void* buffer, size_t len, const wxString& encoding)
 void
 AnsiData::TextSegment(const wxString& wxstr)
 {
+  size_t pf = 0;
   for (size_t i = 0, maxi = wxstr.length(); i < maxi; ++i) {
     wxUniChar ch = wxstr[i];
     if (ch == '\n') {
+      pf += 1;
       if (v.size() > w) {
         w = v.size();
       }
       data.push_back(v);
+      line_pos_fix.push_back(pf);
+      pf = 0;
       v.clear();
     } else if (ch != '\r'){
       v.push_back((AnsiChar){ch, {}, false});
       if (!ch.IsAscii()) {
         v.push_back((AnsiChar){ch, {}, true});
       }
+    } else {
+      pf += 1;
     }
   }
   if (!v.empty()) {
     data.push_back(v);
+    line_pos_fix.push_back(pf);
     v.clear();
   }
 }
