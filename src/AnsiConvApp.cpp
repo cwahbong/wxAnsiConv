@@ -73,7 +73,7 @@ AnsiConvApp::OnRun()
   wxLog::SetActiveTarget(new wxLogStderr);
   wxInitAllImageHandlers();
   const AnsiData& ad = AnsiData::FromFile(input_name, encoding);
-  wxImage image = toImage(ad, 22);
+  wxImage image = toImage(ad, 12);
   image.SaveFile(output_name, "image/png");
   return 0;
 }

@@ -148,7 +148,9 @@ namespace {
 void
 draw_text(wxDC& dc, size_t char_size, size_t r, size_t hc, const AnsiChar& ac)
 {
-  wxBitmap char_bitmap(char_size, char_size);
+  wxFont font{wxFontInfo{static_cast<int>(char_size)}};
+  int size = font.GetPixelSize().GetHeight();
+  wxBitmap char_bitmap(size, size);
 
   rgb brgb = getRgb(false, ac.color.bg);
   wxMemoryDC mdc(char_bitmap);
@@ -162,7 +164,7 @@ draw_text(wxDC& dc, size_t char_size, size_t r, size_t hc, const AnsiChar& ac)
   mdc.Clear();
 
   rgb frgb = getRgb(ac.color.bright, ac.color.fg);
-  mdc.SetFont(wxFontInfo(char_size * 0.75));
+  mdc.SetFont(font);
   mdc.SetTextForeground(wxColour{
       frgb.r,
       frgb.g,
@@ -171,13 +173,15 @@ draw_text(wxDC& dc, size_t char_size, size_t r, size_t hc, const AnsiChar& ac)
   mdc.DrawText(ac.ch, 0, 0);
   mdc.SelectObject(wxNullBitmap);
 
-  int pr = r * char_size;
-  int pc = hc * char_size / 2;
+  int pr = r * size;
+  int pc = hc * size / 2;
+  int w = hc % 2 ? (size + 1) / 2 : size / 2;
+  int h = size;
   wxRect rect{
-    static_cast<int>(ac.r ? char_size / 2 : 0),
+    ac.r ? size - w : 0,
     0,
-    static_cast<int>(char_size / 2),
-    static_cast<int>(char_size)
+    w,
+    h
   };
   dc.DrawBitmap(char_bitmap.GetSubBitmap(rect), pc, pr);
 }
@@ -200,7 +204,9 @@ draw(wxDC& dc, const AnsiData& ad, size_t char_size)
 wxBitmap
 toBitmap(const AnsiData& ad, size_t char_size)
 {
-  wxBitmap bitmap((ad.Width() * char_size) / 2, ad.Height() * char_size);
+  wxFont font{wxFontInfo{static_cast<int>(char_size)}};
+  int pixel_size = font.GetPixelSize().GetHeight();
+  wxBitmap bitmap((ad.Width() * pixel_size) / 2, ad.Height() * pixel_size);
   if (bitmap.IsOk()) {
     wxLogMessage("Bitmap (%d, %d)\n", bitmap.GetWidth(), bitmap.GetHeight());
   } else {
