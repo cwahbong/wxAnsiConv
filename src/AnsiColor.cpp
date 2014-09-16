@@ -1,7 +1,10 @@
 #include "AnsiColor.h"
 
+#include <cstdlib>
 #include <iostream>
 
+// do not use stoi or it won't compile on MinGW
+using std::atoi;
 using std::cerr;
 using std::string;
 
@@ -48,7 +51,7 @@ AnsiColor::update(const string& s)
     }
     int n = 0;
     if (to - from > 0) {
-      n = stoi(s.substr(from, to - from));
+      n = atoi(s.substr(from, to - from).c_str());
     }
     if (n == 0) {
       *this = default_color();
